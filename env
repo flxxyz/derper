@@ -4,3 +4,6 @@ DERP_PORT=33333
 DERP_CONN_LIMIT=100
 DERP_CONF=/opt/derper/derper.conf
 CERT_DIR=/opt/derper/cert
+
+# china may need it
+# GOPROXY=https://goproxy.io

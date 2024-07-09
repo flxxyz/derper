@@ -49,10 +49,10 @@ if [ ! $(is_exists "derper") ] || [ ! -f $DERP_BIN ]; then
   # check go is installed
   if is_exists "go"; then
     echo "----- Installing DERP Server... -----"
-    go install -x "$DERPER_URL"
+    go install -v "$DERPER_URL"
     echo -e "\n"
 
-    DERPER_GOBIN="$(go env GOBIN)/derper"
+    DERPER_GOBIN="$(go env GOPATH)/bin/derper"
     if [ ! -f "$DERPER_GOBIN" ]; then
       echo "Failed to install DERP Server"
       exit 1
