@@ -1,0 +1,19 @@
+[Unit]
+Description=Tailscale DERP Server
+After=network.target
+
+[Service]
+Type=forking
+EnvironmentFile=/opt/derper/env
+ExecStart=/opt/derper/derper.sh --host $DERP_HOST \
+  --port $DERP_PORT \
+  --limit $DERP_CONN_LIMIT \
+  --conf $DERP_CONF \
+  --cert $CERT_DIR \
+  --start
+ExecStop=/opt/derper/derper.sh --stop
+Restart=on-failure
+User=derper
+
+[Install]
+WantedBy=multi-user.target

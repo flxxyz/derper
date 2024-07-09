@@ -1,0 +1,14 @@
+*.pem
+*.crt
+*.csr
+*.srl
+*.p12
+*.pfx
+*.jks
+*.key
+*.pub
+*.cer
+*.der
+*.crl
+*.p7b
+*.p7c
