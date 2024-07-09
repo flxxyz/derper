@@ -5,10 +5,9 @@
 ### QuickStart
 
 ```bash
-# 
-./derper.sh --host foo.link \
-  --verbose \
-  --start
+# Start DERP Server
+./derper.sh --host foo.link --start
 
+# Stop DERP Server
 ./derper.sh --stop
 ```
