@@ -1,17 +1,34 @@
 #!/usr/bin/env bash
 
-VERBOSE=0
-DERP_HOST=""
-DERP_PORT="33333"
-DERP_CONN_LIMIT=100
-DERP_VERIFY_CLENTS=1
-DERP_DIR="/opt/derper"
+DEFAULT_CONFIG_FILE="env"
+CONFIG_FILE=
+
+# Default Configuration
+if [ ! -f "$CONFIG_FILE" ]; then
+  CONFIG_FILE=$DEFAULT_CONFIG_FILE
+fi
+
+# Check Configuration File
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Configuration file $CONFIG_FILE does not exist"
+    exit 1
+fi
+
+# Load Configuration
+while IFS='=' read -r key value; do
+    key=$(echo $key | tr -d '[:space:]')
+    value=$(echo $value | tr -d '[:space:]')
+
+    [[ $key = \#* ]] && continue
+    [[ -z $key ]] && continue
+
+    declare $key=$value
+done < "$CONFIG_FILE"
+
 DERP_BIN="${DERP_DIR}/bin"
 DERP_ENDPOINT="${DERP_BIN}/endpoint.sh"
-DERP_CONF="${DERP_DIR}/derper.conf"
-CERT_DIR="${DERP_DIR}/cert"
 LOG_DIR="${DERP_DIR}/logs"
-LOG_FILE="${LOG_DIR}/$(date +%Y-%m-%d_%H).log"
+LOG_FILE="${LOG_DIR}/derper-$(date +%Y-%m-%d_%H).log"
 PID_FILE="${LOG_DIR}/derper.pid"
 
 help()
@@ -22,6 +39,7 @@ help()
   echo "Usage: derper.sh [ -h | --host <DOMAIN> ] [ -p | --port <NUMBER> ]
              [ -c | --conf <PATH> ] [ --cert <DIR> ]
              [ -l | --limit <NUMBER> ] [ --start ] [ --stop ]
+             [ --self-cert-sign-request ] [ --verbose ]
              [ -h | --help  ]"
   exit 2
 }
@@ -120,9 +138,46 @@ stop_derp_server()
   exit 0
 }
 
+self_cert_sign_request() {
+  if [[ $VERBOSE -eq 1 ]]; then
+    self_sign_certificate
+  else
+    CSR_LOG_FILE="${LOG_DIR}/csr-$(date +%Y-%m-%d_%H).log"
+    self_sign_certificate >> $CSR_LOG_FILE 2>&1 &
+  fi
+  exit 0
+}
+
+self_sign_certificate() {
+  local PRIVATE_KEY="${CERT_DIR}/${DERP_HOST}.key"
+  local SIGN_REQUEST="${CERT_DIR}/${DERP_HOST}.csr"
+  local CERTIFICATE="${CERT_DIR}/${DERP_HOST}.crt"
+
+  echo "PRIVATE_KEY : ${PRIVATE_KEY}"
+  echo "SIGN_REQUEST: ${SIGN_REQUEST}"
+  echo "CERTIFICATE : ${CERTIFICATE}"
+
+  echo -e "\nGenerating private key for ${DERP_HOST}"
+  openssl genpkey -algorithm RSA -out ${PRIVATE_KEY}
+
+  echo -e "\nGenerating signing request for ${DERP_HOST}"
+  openssl req -new \
+    -key ${PRIVATE_KEY} \
+    -out ${SIGN_REQUEST} \
+    -subj "/C=US/ST=New York/L=New York/O=Self-signed Corp/OU=Self-signed Corp/CN=${DERP_HOST}"
+
+  echo -e "\nGenerating certificate for ${DERP_HOST}"
+  openssl x509 -req \
+    -days ${CERT_DAYS} \
+    -in ${SIGN_REQUEST} \
+    -signkey ${PRIVATE_KEY} \
+    -out ${CERTIFICATE} \
+    -extfile <(printf "subjectAltName=DNS:${DERP_HOST}")
+}
+
 # Parse options
 SHORT="h:,p:,c:,l:"
-LONG="verbose,host:,port:,conf:,cert:,limit:,start,stop,help"
+LONG="verbose,host:,port:,conf:,cert:,limit:,start,stop,help,self-cert-sign-request"
 OPTS=$(getopt -a --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -155,13 +210,15 @@ do
       shift 2
       ;;
     --start)
-      _STOP=0
-      _START=1
+      _START_DERP_SERVER=1
       shift 1
       ;;
     --stop)
-      _START=0
-      _STOP=1
+      _STOP_DERP_SERVER=1
+      shift 1
+      ;;
+    --self-cert-sign-request)
+      _SELF_SIGN_REQUEST=1
       shift 1
       ;;
     -h|--help)
@@ -178,9 +235,11 @@ do
   esac
 done
 
-if [[ $_START -eq 1 ]]; then
+if [[ $_SELF_SIGN_REQUEST -eq 1 ]]; then
+  self_cert_sign_request
+elif [[ $_START_DERP_SERVER -eq 1 && $_STOP_DERP_SERVER -eq 0 ]]; then
   start_derp_server
-elif [[ $_STOP -eq 1 ]]; then
+elif [[ $_STOP_DERP_SERVER -eq 1 && $_START_DERP_SERVER -eq 0 ]]; then
   stop_derp_server
 else
   help

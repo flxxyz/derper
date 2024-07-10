@@ -1,10 +1,13 @@
 FROM golang:latest AS builder
 
+ENV GOPROXY=
+
 WORKDIR /app
 
-RUN git clone --depth 1 https://github.com/tailscale/tailscale/ && \
-    cd tailscale/cmd/derper && \
-    CGO_ENABLED=0 /usr/local/go/bin/go build -buildvcs=false -ldflags "-s -w" -o /app/derper
+RUN go version && \
+  git clone --depth 1 https://github.com/tailscale/tailscale/ && \
+  cd tailscale/cmd/derper && \
+  CGO_ENABLED=0 go build -buildvcs=false -ldflags "-s -w" -o /app/derper
 
 FROM ubuntu:22.04
 
@@ -31,8 +34,10 @@ ENV CERT_DIR=${CERT_DIR}
 WORKDIR /opt/derper
 
 COPY --chown=derper:derper . .
-COPY --from=builder /app/derper bin/derper
+COPY --from=builder --chown=derper:derper /app/derper bin/derper
 
+EXPOSE 443/tcp
+EXPOSE 3478/udp
 EXPOSE ${DERP_PORT}/udp
 EXPOSE ${DERP_PORT}/tcp
 
