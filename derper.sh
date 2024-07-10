@@ -62,21 +62,8 @@ start_derp_server()
       -certdir ${CERT_DIR} \
       -tcp-keepalive-time 5m \
       -tcp-user-timeout 10s \
-      $DERP_VERIFY_CLENTS
-
-    # exec "${DERP_ENDPOINT}" -c ${DERP_CONF} \
-    #   -a ":${DERP_PORT}" \
-    #   -http-port -1 \
-    #   -stun \
-    #   -stun-port ${DERP_PORT} \
-    #   -hostname ${DERP_HOST} \
-    #   -accept-connection-limit ${DERP_CONN_LIMIT} \
-    #   --certmode manual \
-    #   -certdir ${CERT_DIR} \
-    #   -tcp-keepalive-time 5m \
-    #   -tcp-user-timeout 10s \
-    #   $DERP_VERIFY_CLENTS > $LOG_FILE 2>&1 &
-    # echo $! > $PID_FILE
+      $DERP_VERIFY_CLENTS > $LOG_FILE 2>&1 &
+    echo $! > $PID_FILE
   else 
     echo "DERP binary not found: $DERP_BIN"
     exit 1
