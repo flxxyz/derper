@@ -16,16 +16,14 @@ is_exists() {
 }
 
 # check tailscale is installed
-if ! is_exists "tailscale"; then
-  echo "Tailscale is not installed"
-  exit 1
+if is_exists "tailscale"; then
+  TAILSCALE_BIN=$(which tailscale)
+  TAILSCALE_VERSION=$("$TAILSCALE_BIN" version | head -n 1)
+  DERPER_VERSION="v$TAILSCALE_VERSION"
+else
+  DERPER_VERSION="latest"
 fi
 
-TAILSCALE_BIN=$(which tailscale)
-# TAILSCALE_BIN="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
-
-TAILSCALE_VERSION=$("$TAILSCALE_BIN" version | head -n 1)
-DERPER_VERSION="v$TAILSCALE_VERSION"
 DERPER_URL="tailscale.com/cmd/derper@$DERPER_VERSION"
 DERPER_BINARY="$DERP_BIN/derper"
 

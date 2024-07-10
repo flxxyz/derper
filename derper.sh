@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
+VERBOSE=0
 DERP_HOST=""
 DERP_PORT="33333"
 DERP_CONN_LIMIT=100
 DERP_VERIFY_CLENTS=1
+DERP_DIR="/opt/derper"
 DERP_BIN="${DERP_DIR}/bin"
 DERP_ENDPOINT="${DERP_BIN}/endpoint.sh"
 DERP_CONF="${DERP_DIR}/derper.conf"
@@ -51,25 +53,60 @@ start_derp_server()
       DERP_VERIFY_CLENTS=""
     fi
 
-    exec "${DERP_ENDPOINT}" -c ${DERP_CONF} \
-      -a ":${DERP_PORT}" \
-      -http-port -1 \
-      -stun \
-      -stun-port ${DERP_PORT} \
-      -hostname ${DERP_HOST} \
-      -accept-connection-limit ${DERP_CONN_LIMIT} \
-      --certmode manual \
-      -certdir ${CERT_DIR} \
-      -tcp-keepalive-time 5m \
-      -tcp-user-timeout 10s \
-      $DERP_VERIFY_CLENTS > $LOG_FILE 2>&1 &
-    echo $! > $PID_FILE
+    if [[ $VERBOSE -eq 1 ]]; then
+      endpoint
+    else
+      endpoint > $LOG_FILE 2>&1 &
+      PID=$!
+      echo $PID > $PID_FILE
+      check_derp_running $PID
+    fi
   else 
     echo "DERP binary not found: $DERP_BIN"
     exit 1
   fi
+}
 
-  exit 0
+endpoint() {
+  exec "${DERP_ENDPOINT}" -c ${DERP_CONF} \
+    -a ":${DERP_PORT}" \
+    -http-port -1 \
+    -stun \
+    -stun-port ${DERP_PORT} \
+    -hostname ${DERP_HOST} \
+    -accept-connection-limit ${DERP_CONN_LIMIT} \
+    --certmode manual \
+    -certdir ${CERT_DIR} \
+    -tcp-keepalive-time 5m \
+    -tcp-user-timeout 10s \
+    $DERP_VERIFY_CLENTS
+}
+
+check_derp_running() {
+  pid=$1
+  check_threshold=15
+  check_period=1
+  checks=0
+
+  while true;
+  do
+    if [[ $checks -eq $check_threshold ]]; then
+      break
+    fi
+
+    sleep $check_period
+
+    if [[ ! -z "$(ps -ef | awk '{print $2}' | grep $pid)" ]]; then
+      if [ -f $PID_FILE ]; then
+        if [[ `cat ${PID_FILE}` -eq $pid ]]; then
+          rm -rf $PID_FILE
+          exit 2
+        fi
+      fi
+    fi
+
+    checks=$(($checks+1))
+  done
 }
 
 stop_derp_server()
@@ -85,7 +122,7 @@ stop_derp_server()
 
 # Parse options
 SHORT="h:,p:,c:,l:"
-LONG="host:,port:,conf:,cert:,limit:,start,stop,help"
+LONG="verbose,host:,port:,conf:,cert:,limit:,start,stop,help"
 OPTS=$(getopt -a --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -93,6 +130,10 @@ eval set -- "$OPTS"
 while true;
 do
   case $1 in
+    --verbose)
+      VERBOSE=1
+      shift 1
+      ;;
     -h|--host)
       DERP_HOST=$2
       shift 2
@@ -114,10 +155,14 @@ do
       shift 2
       ;;
     --start)
-      start_derp_server
+      _STOP=0
+      _START=1
+      shift 1
       ;;
     --stop)
-      stop_derp_server
+      _START=0
+      _STOP=1
+      shift 1
       ;;
     -h|--help)
       help
@@ -133,4 +178,10 @@ do
   esac
 done
 
-help
+if [[ $_START -eq 1 ]]; then
+  start_derp_server
+elif [[ $_STOP -eq 1 ]]; then
+  stop_derp_server
+else
+  help
+fi
