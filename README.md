@@ -2,59 +2,206 @@
 
 > Tailscale DERP Server
 
-### QuickStart
+```
+Usage: derper.sh --start [--verbose]
+       derper.sh --stop [--verbose]
+       derper.sh --self-cert-sign-request [--verbose]
+```
+
+## QuickStart
+
+### Start DERP Server
 
 ```bash
-# Start DERP Server
-./derper.sh --host foo.link --start
+./derper.sh --start --verbose
+```
 
-# Stop DERP Server
+### Stop DERP Server
+
+```bash
 ./derper.sh --stop
 ```
 
-#### Self-signed certificate
+### Self-signed certificate
 
 ```bash
-./cert/request.sh
+./derper.sh --self-cert-sign-request --verbose
 ```
 
-### Derp Map
+## Environment
 
-> Append to access controls
+> this local file `env`
+
+| Name               | Value                   | Optional |               Remark               |
+| :----------------- | :---------------------- | :------: | :--------------------------------: |
+| VERBOSE            | 0                       |   YES    |                                    |
+| DERP_DIR           | /opt/derper             |   YES    |                                    |
+| DERP_HOST          |                         |    NO    |                                    |
+| DERP_PORT          | 33333                   |   YES    |                                    |
+| DERP_CONN_LIMIT    | 100                     |   YES    |                                    |
+| DERP_VERIFY_CLENTS | 1                       |   YES    |                                    |
+| DERP_CONF          | /opt/derper/derper.conf |   YES    |                                    |
+| CERT_DIR           | /opt/derper/cert        |   YES    | Check form Self-signed certificate |
+| CERT_DAYS          | 36500                   |   YES    |                                    |
+| GOPROXY            | https://goproxy.io      |   YES    |         china may need it          |
+
+### Command parameters
+
+| Command                  | description                                          |
+| :----------------------- | :--------------------------------------------------- |
+| --self-cert-sign-request | generate self-signed certificate                     |
+| --start                  | start derp server                                    |
+| --stop                   | stop derp server                                     |
+| --host <domain>          | host name ( alias -h )                               |
+| --port <number>          | tls and stun port ( alias -p )                       |
+| --limit <number>         | rate limit for accepting new connection ( alias -l ) |
+| --conf <file path>       | derp config file path ( alias -c )                   |
+| --cert <directory>       | directory to store certs                             |
+| --verbose                | control the foreground output log                    |
+| --help                   | show help                                            |
+
+## Simple Derp Network
 
 ```json
 {
   // ...
   "derpMap": {
-    "OmitDefaultRegions": false, // 替换官方服务器需要设置为true，但可能会完全无法访问哦
+    "OmitDefaultRegions": true,
     "Regions": {
       "900": {
         "RegionID": 900,
-        "RegionCode": "xnet-aws-01", // 编号随意
-        "RegionName": "xnet", // 名字随意
+        "RegionCode": "aws-us-nc",
+        "RegionName": "AWS US West (Northern California)",
         "Nodes": [
           {
-            "Name": "aws-01", // 随意
+            "Name": "900-01",
             "RegionID": 900,
-            "HostName": "aws-01.foo.link", // 与DERP服务器绑定的域名
-            "DERPPort": 33333, // 环境变量中配置的端口号
-            "STUNPort": 33333,
-            "InsecureForTests": false, // 不验证证书有效性，使用自签证书只能设置为true
+            "HostName": "aws-us-nc-w3qw.foo.link",
+            "DERPPort": 33900,
+            "STUNPort": 33900,
+            "InsecureForTests": false,
           },
         ],
       },
       "901": {
         "RegionID": 901,
-        "RegionCode": "xnet-aws-02",
-        "RegionName": "xnet",
+        "RegionCode": "aws-na-ca-cgy",
+        "RegionName": "AWS Canada West (Calgary)",
         "Nodes": [
           {
-            "Name": "aws-02",
+            "Name": "901-01",
             "RegionID": 901,
-            "HostName": "aws-02.foo.link",
-            "DERPPort": 33333,
-            "STUNPort": 33333,
-            "InsecureForTests": true,
+            "HostName": "aws-na-ca-cgy-xs2d.foo.link",
+            "DERPPort": 33901,
+            "STUNPort": 33901,
+            "InsecureForTests": false,
+          },
+          {
+            "Name": "901-02",
+            "RegionID": 901,
+            "HostName": "aws-na-ca-cgy-v2cp.foo.link",
+            "DERPPort": 33901,
+            "STUNPort": 33901,
+            "InsecureForTests": false,
+          },
+        ],
+      },
+      "902": {
+        "RegionID": 902,
+        "RegionCode": "aws-aus-syd",
+        "RegionName": "AWS Australia (Sydney)",
+        "Nodes": [
+          {
+            "Name": "902-01",
+            "RegionID": 902,
+            "HostName": "aws-aus-syd-ezz5.foo.link",
+            "DERPPort": 33902,
+            "STUNPort": 33902,
+            "InsecureForTests": false,
+          },
+          {
+            "Name": "902-02",
+            "RegionID": 902,
+            "HostName": "aws-aus-syd-oyir.foo.link",
+            "DERPPort": 33902,
+            "STUNPort": 33902,
+            "InsecureForTests": false,
+          },
+        ],
+      },
+      "903": {
+        "RegionID": 903,
+        "RegionCode": "az-asia-osa",
+        "RegionName": "Azure Japan West (Osaka)",
+        "Nodes": [
+          {
+            "Name": "903-01",
+            "RegionID": 903,
+            "HostName": "az-asia-osa-epmj.foo.link",
+            "DERPPort": 33903,
+            "STUNPort": 33903,
+            "InsecureForTests": false,
+          },
+          {
+            "Name": "903-02",
+            "RegionID": 903,
+            "HostName": "az-asia-osa-7b6y.foo.link",
+            "DERPPort": 33903,
+            "STUNPort": 33903,
+            "InsecureForTests": false,
+          },
+        ],
+      },
+      "904": {
+        "RegionID": 904,
+        "RegionCode": "gcp-eur-west3",
+        "RegionName": "GCP Europe West3 (Frankfurt)",
+        "Nodes": [
+          {
+            "Name": "904-01",
+            "RegionID": 904,
+            "HostName": "gcp-eur-west3-ng1a.foo.link",
+            "DERPPort": 33904,
+            "STUNPort": 33904,
+            "InsecureForTests": false,
+          },
+          {
+            "Name": "904-02",
+            "RegionID": 904,
+            "HostName": "gcp-eur-west3-b-huzr.foo.link",
+            "DERPPort": 33904,
+            "STUNPort": 33904,
+            "InsecureForTests": false,
+          },
+        ],
+      },
+      "905": {
+        "RegionID": 905,
+        "RegionCode": "gcp-sa-east1",
+        "RegionName": "GCP South America East1 (Osascu)",
+        "Nodes": [
+          {
+            "Name": "905-01",
+            "RegionID": 905,
+            "HostName": "gcp-sa-east1-pewt.foo.link",
+            "DERPPort": 33905,
+            "STUNPort": 33905,
+            "InsecureForTests": false,
+          },
+        ],
+      },
+      "906": {
+        "RegionID": 906,
+        "RegionCode": "az-asia-sg",
+        "RegionName": "Azure Southeast Asia (Singapore)",
+        "Nodes": [
+          {
+            "Name": "906-01",
+            "RegionID": 906,
+            "HostName": "az-asia-sg-aovm.foo.link",
+            "DERPPort": 33906,
+            "STUNPort": 33906,
+            "InsecureForTests": false,
           },
         ],
       },

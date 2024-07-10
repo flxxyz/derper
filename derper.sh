@@ -36,11 +36,9 @@ help()
   if [ -n "$1" ]; then
     echo "Unexpected option: $1"
   fi
-  echo "Usage: derper.sh [ -h | --host <DOMAIN> ] [ -p | --port <NUMBER> ]
-             [ -c | --conf <PATH> ] [ --cert <DIR> ]
-             [ -l | --limit <NUMBER> ] [ --start ] [ --stop ]
-             [ --self-cert-sign-request ] [ --verbose ]
-             [ -h | --help  ]"
+  echo "Usage: derper.sh --start [-h <domain>] [-p <tls and stun port>] [-c <file>] [--cert <dir>] [-l <conns>] [--verbose]
+       derper.sh --stop [--verbose]
+       derper.sh --self-cert-sign-request [--verbose]"
   exit 2
 }
 
@@ -221,7 +219,7 @@ do
       _SELF_SIGN_REQUEST=1
       shift 1
       ;;
-    -h|--help)
+    --help)
       help
       ;;
     --)
