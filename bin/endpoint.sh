@@ -30,14 +30,15 @@ DERPER_URL="tailscale.com/cmd/derper@$DERPER_VERSION"
 DERPER_BINARY="$DERP_BIN/derper"
 
 echo "------------ Parameters -------------"
-echo "DERP_HOST:       $DERP_HOST"
-echo "DERP_PORT:       $DERP_PORT"
-echo "DERP_CONN_LIMIT: $DERP_CONN_LIMIT"
-echo "DERP_CONF:       $DERP_CONF"
-echo "CERT_DIR:        $CERT_DIR"
-echo "LOG_FILE:        $LOG_FILE"
-echo "PID_FILE:        $PID_FILE"
-echo "DERPER_BINARY:   $DERPER_BINARY"
+echo "DERP_HOST:          $DERP_HOST"
+echo "DERP_PORT:          $DERP_PORT"
+echo "DERP_CONN_LIMIT:    $DERP_CONN_LIMIT"
+echo "DERP_VERIFY_CLENTS: $DERP_VERIFY_CLENTS"
+echo "DERP_CONF:          $DERP_CONF"
+echo "CERT_DIR:           $CERT_DIR"
+echo "LOG_FILE:           $LOG_FILE"
+echo "PID_FILE:           $PID_FILE"
+echo "DERPER_BINARY:      $DERPER_BINARY"
 echo -e "\n"
 echo "-------------- Version --------------"
 echo "Tailscale version: $TAILSCALE_VERSION"
@@ -45,19 +46,23 @@ echo "   Derper version: $DERPER_VERSION"
 echo -e "\n"
 
 
-if [ ! $(is_exists "derper") ] || [ ! -f $DERP_BIN ]; then
+if [ ! $(is_exists "derper") ] || [ ! -f "$DERPER_BINARY" ]; then
   # check go is installed
   if is_exists "go"; then
-    echo "----- Installing DERP Server... -----"
-    go install -v "$DERPER_URL"
-    echo -e "\n"
-
     DERPER_GOBIN="$(go env GOPATH)/bin/derper"
     if [ ! -f "$DERPER_GOBIN" ]; then
-      echo "Failed to install DERP Server"
-      exit 1
+      echo "----- Installing DERP Server... -----"
+      go install -v "$DERPER_URL"
+      echo -e "\n"
+
+      if [ ! -f "$DERPER_GOBIN" ]; then
+        echo "Failed to install DERP Server"
+        exit 1
+      fi
     fi
-    cp $DERPER_GOBIN $DERPER_BINARY
+
+    # overwrite
+    cp -f "$DERPER_GOBIN" "$DERPER_BINARY"
   else
     echo "Go is not installed"
     echo "Please install Go and try again"

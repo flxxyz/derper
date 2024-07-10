@@ -12,6 +12,12 @@
 ./derper.sh --stop
 ```
 
+#### Self-signed certificate
+
+```bash
+./cert/request.sh
+```
+
 ### Derp Map
 
 > Append to access controls

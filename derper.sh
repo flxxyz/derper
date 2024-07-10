@@ -3,7 +3,7 @@
 DERP_HOST=""
 DERP_PORT="33333"
 DERP_CONN_LIMIT=100
-DERP_DIR="/opt/derper"
+DERP_VERIFY_CLENTS=1
 DERP_BIN="${DERP_DIR}/bin"
 DERP_ENDPOINT="${DERP_BIN}/endpoint.sh"
 DERP_CONF="${DERP_DIR}/derper.conf"
@@ -44,7 +44,13 @@ start_derp_server()
   fi
 
   if [ -f $DERP_ENDPOINT ]; then
-    export DERP_HOST DERP_PORT DERP_CONN_LIMIT DERP_BIN DERP_CONF CERT_DIR LOG_FILE PID_FILE
+    export DERP_HOST DERP_PORT DERP_CONN_LIMIT DERP_VERIFY_CLENTS DERP_BIN DERP_CONF CERT_DIR LOG_FILE PID_FILE
+
+    DERP_VERIFY_CLENTS="--verify-clients"
+    if [[ $DERP_VERIFY_CLENTS  -eq 0 ]]; then
+      DERP_VERIFY_CLENTS=""
+    fi
+
     exec "${DERP_ENDPOINT}" -c ${DERP_CONF} \
       -a ":${DERP_PORT}" \
       -http-port -1 \
@@ -56,8 +62,21 @@ start_derp_server()
       -certdir ${CERT_DIR} \
       -tcp-keepalive-time 5m \
       -tcp-user-timeout 10s \
-      --verify-clients > $LOG_FILE 2>&1 &
-    echo $! > $PID_FILE
+      $DERP_VERIFY_CLENTS
+
+    # exec "${DERP_ENDPOINT}" -c ${DERP_CONF} \
+    #   -a ":${DERP_PORT}" \
+    #   -http-port -1 \
+    #   -stun \
+    #   -stun-port ${DERP_PORT} \
+    #   -hostname ${DERP_HOST} \
+    #   -accept-connection-limit ${DERP_CONN_LIMIT} \
+    #   --certmode manual \
+    #   -certdir ${CERT_DIR} \
+    #   -tcp-keepalive-time 5m \
+    #   -tcp-user-timeout 10s \
+    #   $DERP_VERIFY_CLENTS > $LOG_FILE 2>&1 &
+    # echo $! > $PID_FILE
   else 
     echo "DERP binary not found: $DERP_BIN"
     exit 1
