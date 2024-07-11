@@ -100,7 +100,7 @@ endpoint() {
 
 check_derp_running() {
   pid=$1
-  check_threshold=15
+  check_threshold=5
   check_period=1
   checks=0
 
