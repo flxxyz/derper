@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DEFAULT_CONFIG_FILE="env"
+DEFAULT_CONFIG_FILE="/opt/derper/env"
 CONFIG_FILE=
 
 # Default Configuration
