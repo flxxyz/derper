@@ -81,6 +81,7 @@ start_derp_server()
     echo "DERP binary not found: $DERP_BIN"
     exit 1
   fi
+  exit 0
 }
 
 endpoint() {
@@ -100,7 +101,7 @@ endpoint() {
 
 check_derp_running() {
   pid=$1
-  check_threshold=30
+  check_threshold=60
   check_period=1
   checks=0
 
