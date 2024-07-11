@@ -75,7 +75,7 @@ start_derp_server()
       endpoint > $LOG_FILE 2>&1 &
       PID=$!
       echo $PID > $PID_FILE
-      check_derp_running $PID
+      check_derp_running "$PID" > /dev/null 2>&1
     fi
   else 
     echo "DERP binary not found: $DERP_BIN"
@@ -100,7 +100,7 @@ endpoint() {
 
 check_derp_running() {
   pid=$1
-  check_threshold=5
+  check_threshold=30
   check_period=1
   checks=0
 
