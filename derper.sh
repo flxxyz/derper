@@ -114,7 +114,7 @@ check_derp_running() {
 
     sleep $check_period
 
-    if [[ ! -z "$(ps -ef | awk '{print $2}' | grep $pid)" ]]; then
+    if [[ -z "$(ps -ef | awk '{print $2}' | grep $pid)" ]]; then
       if [ -f $PID_FILE ]; then
         if [[ `cat ${PID_FILE}` -eq $pid ]]; then
           rm -rf $PID_FILE
