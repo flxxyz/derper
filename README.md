@@ -19,7 +19,7 @@ Usage: derper.sh --start [--verbose]
 ### Stop DERP Server
 
 ```bash
-./derper.sh --stop
+./derper.sh --stop --verbose
 ```
 
 ### Self-signed certificate
@@ -30,35 +30,30 @@ Usage: derper.sh --start [--verbose]
 
 ## Environment
 
-> this local file `env`
-
-| Name               | Value                   | Optional |               Remark               |
-| :----------------- | :---------------------- | :------: | :--------------------------------: |
-| VERBOSE            | 0                       |   YES    |                                    |
-| DERP_DIR           | /opt/derper             |   YES    |                                    |
-| DERP_HOST          |                         |    NO    |                                    |
-| DERP_PORT          | 33333                   |   YES    |                                    |
-| DERP_CONN_LIMIT    | 100                     |   YES    |                                    |
-| DERP_VERIFY_CLENTS | 1                       |   YES    |                                    |
-| DERP_CONF          | /opt/derper/derper.conf |   YES    |                                    |
-| CERT_DIR           | /opt/derper/cert        |   YES    | Check form Self-signed certificate |
-| CERT_DAYS          | 36500                   |   YES    |                                    |
-| GOPROXY            | https://goproxy.io      |   YES    |         china may need it          |
+| Name               | Default Value           | Required | Remark                             |
+| :----------------- | :---------------------- | :------: | :--------------------------------- |
+| CONFIG_FILE        | /opt/derper/env         |    NO    | Absolute path to the `env` file    |
+| VERBOSE            | 0                       |    NO    | Output stdout and stderr to tty    |
+| DERP_DIR           | /opt/derper             |    NO    | Custom derper directory            |
+| DERP_HOST          |                         |   YES    | Derp server listen host            |
+| DERP_PORT          | 33333                   |    NO    | Derp server listen port            |
+| DERP_CONN_LIMIT    | 100                     |    NO    | Limit derp server clients          |
+| DERP_VERIFY_CLENTS | 1                       |    NO    |                                    |
+| DERP_CONF          | /opt/derper/derper.conf |    NO    | Derp server node info              |
+| CERT_DIR           | /opt/derper/cert        |    NO    | Check form Self-signed certificate |
+| LOG_DIR            | /opt/derper/logs        |    NO    | Logs store directory               |
+| CERT_DAYS          | 36500                   |    NO    |                                    |
+| GOPROXY            | https://goproxy.io      |    NO    | China may need it                  |
 
 ### Command parameters
 
-| Command                  | description                                          |
-| :----------------------- | :--------------------------------------------------- |
-| --self-cert-sign-request | generate self-signed certificate                     |
-| --start                  | start derp server                                    |
-| --stop                   | stop derp server                                     |
-| --host <domain>          | host name ( alias -h )                               |
-| --port <number>          | tls and stun port ( alias -p )                       |
-| --limit <number>         | rate limit for accepting new connection ( alias -l ) |
-| --conf <file path>       | derp config file path ( alias -c )                   |
-| --cert <directory>       | directory to store certs                             |
-| --verbose                | control the foreground output log                    |
-| --help                   | show help                                            |
+| Command                  | description                       |
+| :----------------------- | :-------------------------------- |
+| --self-cert-sign-request | generate self-signed certificate  |
+| --start                  | start derp server                 |
+| --stop                   | stop derp server                  |
+| --verbose                | control the foreground output log |
+| --help                   | show help                         |
 
 ## Simple Derp Network
 

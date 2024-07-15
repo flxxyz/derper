@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 DEFAULT_CONFIG_FILE="/opt/derper/env"
-CONFIG_FILE=
 
 # Default Configuration
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -25,9 +24,35 @@ while IFS='=' read -r key value; do
     declare $key=$value
 done < "$CONFIG_FILE"
 
+# (Optional) Default Values
+if [[ -z $DERP_DIR ]]; then
+  DERP_DIR="/opt/derper"
+fi
+if [[ -z $DERP_PORT ]]; then
+  DERP_PORT="33333"
+fi
+if [[ -z $DERP_CONN_LIMIT ]]; then
+  DERP_CONN_LIMIT="100"
+fi
+if [[ -z $DERP_VERIFY_CLENTS ]]; then
+  DERP_VERIFY_CLENTS="1"
+fi
+if [[ -z $DERP_CONF ]]; then
+  DERP_CONF="${DERP_DIR}/derp.conf"
+fi
+if [[ -z $CERT_DIR ]]; then
+  CERT_DIR="${DERP_DIR}/cert"
+fi
+if [[ -z $CERT_DAYS ]]; then
+  CERT_DAYS="36500"
+fi
+
 DERP_BIN="${DERP_DIR}/bin"
 DERP_ENDPOINT="${DERP_BIN}/endpoint.sh"
-LOG_DIR="${DERP_DIR}/logs"
+# Logs store default directory
+if [[ -z $LOG_DIR ]]; then
+  LOG_DIR="${DERP_DIR}/logs"
+fi
 LOG_FILE="${LOG_DIR}/derper-$(date +%Y-%m-%d_%H).log"
 PID_FILE="${LOG_DIR}/derper.pid"
 
@@ -36,7 +61,7 @@ help()
   if [ -n "$1" ]; then
     echo "Unexpected option: $1"
   fi
-  echo "Usage: derper.sh --start [-h <domain>] [-p <tls and stun port>] [-c <file>] [--cert <dir>] [-l <conns>] [--verbose]
+  echo "Usage: derper.sh --start [--verbose]
        derper.sh --stop [--verbose]
        derper.sh --self-cert-sign-request [--verbose]"
   exit 2
@@ -49,16 +74,8 @@ start_derp_server()
     exit 0
   fi
 
-  if [ -z $DERP_HOST ]; then
-    help "-h or --host is required"
-  fi
-
-  if [ -z $DERP_CONF ]; then
-    help "-f or --conf is required"
-  fi
-
-  if [ -z $CERT_DIR ]; then
-    help "--cert is required"
+  if [[ -z $DERP_HOST ]]; then
+    help "DERP_HOST env is required"
   fi
 
   if [ -f $DERP_ENDPOINT ]; then
@@ -75,8 +92,8 @@ start_derp_server()
       endpoint > $LOG_FILE 2>&1 &
       PID=$!
       echo $PID > $PID_FILE
-      # check_derp_running "$PID" > /dev/null 2>&1
-      check_derp_running "$PID"
+      check_derp_running "$PID" > /dev/null 2>&1
+      # check_derp_running "$PID"
     fi
   else 
     echo "DERP binary not found: $DERP_BIN"
@@ -95,14 +112,12 @@ endpoint() {
     -accept-connection-limit ${DERP_CONN_LIMIT} \
     --certmode manual \
     -certdir ${CERT_DIR} \
-    -tcp-keepalive-time 5m \
-    -tcp-user-timeout 10s \
     $DERP_VERIFY_CLENTS
 }
 
 check_derp_running() {
   pid=$1
-  check_threshold=60
+  check_threshold=30
   check_period=1
   checks=0
 
@@ -114,7 +129,7 @@ check_derp_running() {
 
     sleep $check_period
 
-    if [[ -z "$(ps -ef | awk '{print $2}' | grep $pid)" ]]; then
+    if [[ -z `ps -ef | awk '{print $2}' | grep $pid` ]]; then
       if [ -f $PID_FILE ]; then
         if [[ `cat ${PID_FILE}` -eq $pid ]]; then
           rm -rf $PID_FILE
@@ -132,7 +147,10 @@ stop_derp_server()
   echo "Stopping DERP Server..."
 
   if [ -f $PID_FILE ]; then
-    kill `cat ${PID_FILE}`
+    PID=`cat $PID_FILE`
+    if [[ ! -z `ps -ef | awk '{print $2}' | grep $PID` ]]; then
+      kill $PID
+    fi
     rm -rf $PID_FILE
   fi
   exit 0
@@ -175,9 +193,15 @@ self_sign_certificate() {
     -extfile <(printf "subjectAltName=DNS:${DERP_HOST}")
 }
 
+create_derper_user() {
+  sudo useradd -r -s /bin/false derper
+  sudo cp "$DERP_DIR/derper.service" /etc/systemd/system/derper.service
+  sudo systemctl daemon-reload
+}
+
 # Parse options
-SHORT="h:,p:,c:,l:"
-LONG="verbose,host:,port:,conf:,cert:,limit:,start,stop,help,self-cert-sign-request"
+SHORT="v,h"
+LONG="verbose,help,start,stop,self-cert-sign-request"
 OPTS=$(getopt -a --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -188,26 +212,6 @@ do
     --verbose)
       VERBOSE=1
       shift 1
-      ;;
-    -h|--host)
-      DERP_HOST=$2
-      shift 2
-      ;;
-    -p|--port)
-      DERP_PORT=$2
-      shift 2
-      ;;
-    -c|--conf)
-      DERP_CONF=$2
-      shift 2
-      ;;
-    --cert)
-      CERT_DIR=$2
-      shift 2
-      ;;
-    -l|--limit)
-      DERP_CONN_LIMIT=$2
-      shift 2
       ;;
     --start)
       _START_DERP_SERVER=1
@@ -221,7 +225,7 @@ do
       _SELF_SIGN_REQUEST=1
       shift 1
       ;;
-    --help)
+    -h|--help)
       help
       ;;
     --)

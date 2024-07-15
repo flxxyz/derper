@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=forking
-TimeoutSec=180
+TimeoutSec=120
 EnvironmentFile=/opt/derper/env
 ExecStart=/opt/derper/derper.sh --start
 ExecStop=/opt/derper/derper.sh --stop
