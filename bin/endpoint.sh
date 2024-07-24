@@ -16,16 +16,14 @@ is_exists() {
 }
 
 # check tailscale is installed
-if ! is_exists "tailscale"; then
-  echo "Tailscale is not installed"
-  exit 1
+if is_exists "tailscale"; then
+  TAILSCALE_BIN=$(which tailscale)
+  TAILSCALE_VERSION=$("$TAILSCALE_BIN" version | head -n 1)
+  DERPER_VERSION="v$TAILSCALE_VERSION"
+else
+  DERPER_VERSION="latest"
 fi
 
-TAILSCALE_BIN=$(which tailscale)
-# TAILSCALE_BIN="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
-
-TAILSCALE_VERSION=$("$TAILSCALE_BIN" version | head -n 1)
-DERPER_VERSION="v$TAILSCALE_VERSION"
 DERPER_URL="tailscale.com/cmd/derper@$DERPER_VERSION"
 DERPER_BINARY="$DERP_BIN/derper"
 
@@ -49,20 +47,20 @@ echo -e "\n"
 if [ ! $(is_exists "derper") ] || [ ! -f "$DERPER_BINARY" ]; then
   # check go is installed
   if is_exists "go"; then
-    DERPER_GOBIN="$(go env GOPATH)/bin/derper"
-    if [ ! -f "$DERPER_GOBIN" ]; then
+    DERPER_GO_BIN="$(go env GOPATH)/bin/derper"
+    if [ ! -f "$DERPER_GO_BIN" ]; then
       echo "----- Installing DERP Server... -----"
       go install -v "$DERPER_URL"
       echo -e "\n"
 
-      if [ ! -f "$DERPER_GOBIN" ]; then
+      if [ ! -f "$DERPER_GO_BIN" ]; then
         echo "Failed to install DERP Server"
         exit 1
       fi
     fi
 
     # overwrite
-    cp -f "$DERPER_GOBIN" "$DERPER_BINARY"
+    cp -f "$DERPER_GO_BIN" "$DERPER_BINARY"
   else
     echo "Go is not installed"
     echo "Please install Go and try again"

@@ -4,7 +4,3 @@
 pkg
 *.conf
 *.key
-env
-*.pem
-*.csr
-*.crt
